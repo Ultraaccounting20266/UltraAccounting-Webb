@@ -513,7 +513,7 @@ function drawBilling(){
  ${F.customer_id?`<div class="muted" style="margin-top:6px">Existing customer · <a href="#" onclick="F.customer_id=null;drawBilling();return false">Naya customer</a></div>`:''}
  </div>
  <div class="card"><h2>Items</h2>
-  <div class="sugw"><input id="f_item" placeholder="Item name type karein (Enter = add)" oninput="drawSug()" onkeydown="itemKey(event)" autocomplete="off">
+  <div class="sugw"><div style="display:flex;gap:8px"><input id="f_item" style="flex:1" enterkeyhint="done" placeholder="Item name type karein (Enter = add)" oninput="drawSug()" onkeydown="itemKey(event)" autocomplete="off"><button type="button" class="btn g" style="white-space:nowrap" onclick="addTyped()">+ Add</button></div>
    <div class="sug" id="isug"></div></div>
    ${fOn('barcode')?'<button class="btn l s" style="margin-top:8px" onclick="scanOpen()">📷 Scan barcode</button>':''}
   <div id="f_items" style="margin-top:12px"></div>
@@ -582,14 +582,19 @@ function drawSug(){
  const q=($('f_item').value||'').trim().toLowerCase();
  if(!q){box.style.display='none';return}
  const r=D.items.filter(it=>it.name&&(it.name.toLowerCase().includes(q)||(it.barcode||'')===q)).slice(0,10);
- if(!r.length){box.style.display='none';return}
+ const ex=r.some(it=>it.name.toLowerCase()===q);
  box.style.display='block';
- box.innerHTML=r.map(it=>`<div onclick="addItem('${it.id}')"><span>${esc(it.name)}</span><b>₹ ${inr(it.rate||0)}</b></div>`).join('');
+ box.innerHTML=r.map(it=>`<div onclick="addItem('${it.id}')"><span>${esc(it.name)}</span><b>₹ ${inr(it.rate||0)}</b></div>`).join('')+(ex?'':`<div onclick="addTyped()" style="color:#0a7d3c;font-weight:700"><span>+ Naya item: ${esc($('f_item').value.trim())}</span><b>Add</b></div>`);
 }
+/* fix: some Android keyboards don't send Enter key name; + Add button and '+ Naya item' row */
 function itemKey(e){
- if(e.key==='Enter'){
-  e.preventDefault();
-  const q=$('f_item').value.trim();
+ if(e.key==='Enter'||e.keyCode===13||e.which===13){
+  e.preventDefault();addTyped();
+ }
+}
+function addTyped(){
+ {
+  const q=($('f_item').value||'').trim();
   if(!q)return;
   const bc=D.items.find(it=>it.barcode&&it.barcode===q);if(bc){addItem(bc.id);return}
    const found=D.items.find(it=>it.name&&it.name.toLowerCase()===q.toLowerCase());
